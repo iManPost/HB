@@ -101,31 +101,217 @@ setInterval(function(){
 },1000);
 </script>
 
+
 <style>
-*{
-    user-select:none;
-    -webkit-user-select:none;
-    -moz-user-select:none;
-    -ms-user-select:none;
-    -webkit-touch-callout:none;
-}
-html,body{
-    width:100%;
-    height:100%;
-    margin:0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); background: var(--surface-0); color: var(--text-primary); }
+.player-wrap { max-width: 900px; margin: 0 auto; padding: 1rem; }
+.channel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
+.ch-btn { background: var(--surface-1); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: border-color 0.15s; }
+.ch-btn:hover { border-color: var(--border-strong); }
+.ch-btn.active { border: 1.5px solid var(--border-accent); background: var(--bg-accent); }
+.ch-btn img { width: 48px; height: 48px; object-fit: contain; border-radius: 4px; }
+.ch-btn span { font-size: 11px; color: var(--text-secondary); text-align: center; font-weight: 500; }
+.ch-btn.active span { color: var(--text-accent); }
+.video-box { background: #000; border-radius: 12px; overflow: hidden; position: relative; aspect-ratio: 16/9; margin-bottom: 1rem; }
+video { width: 100%; height: 100%; display: block; }
+.video-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); flex-direction: column; gap: 12px; }
+.video-overlay.hidden { display: none; }
+.spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ov-text { color: #fff; font-size: 13px; opacity: 0.8; }
+.status-bar { background: var(--surface-1); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fill-success); flex-shrink: 0; }
+.dot.err { background: var(--fill-danger); }
+.dot.loading { background: var(--fill-warning); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.proxy-note { margin-top: 8px; font-size: 11px; color: var(--text-muted); padding: 8px 12px; background: var(--bg-warning); border: 0.5px solid var(--border-warning); border-radius: var(--radius); }
+.proxy-note a { color: var(--text-accent); }
+.controls { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; }
+.proxy-select { flex: 1; font-size: 12px; padding: 6px 10px; border: 0.5px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-2); color: var(--text-primary); }
+.play-btn { background: var(--fill-accent); color: var(--on-accent); border: none; border-radius: var(--radius); padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.play-btn:hover { background: var(--fill-accent-hover); }
 </style>
 
-</head>
+<div class="player-wrap">
+  <h2 style="font-size:16px;font-weight:500;margin-bottom:12px;color:var(--text-primary)">
+    <i class="ti ti-player-play" aria-hidden="true" style="font-size:18px;vertical-align:-2px;margin-right:6px;color:var(--text-accent)"></i>HBO MPD Player
+  </h2>
 
-<body>
+  <div class="channel-grid" id="ch-grid"></div>
 
-<iframe
-    src="./New folder/index.html"
-    width="100%"
-    height="100%"
-    style="position:fixed;top:0;left:0;border:none;">
-</iframe>
+  <div class="controls">
+    <select class="proxy-select" id="proxy-sel">
+      <option value="https://corsproxy.io/?">corsproxy.io (แนะนำ)</option>
+      <option value="https://api.allorigins.win/raw?url=">allorigins.win</option>
+      <option value="https://thingproxy.freeboard.io/fetch/">thingproxy</option>
+      <option value="">ไม่ใช้ proxy (ถ้าเปิด CORS extension)</option>
+    </select>
+    <button class="play-btn" id="play-btn">
+      <i class="ti ti-player-play" aria-hidden="true"></i> เล่น
+    </button>
+  </div>
+
+  <div class="video-box">
+    <video id="vid" controls crossorigin="anonymous"></video>
+    <div class="video-overlay" id="overlay">
+      <div class="ov-text" style="font-size:15px;color:#fff;font-weight:500">เลือกช่องแล้วกด เล่น</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="dot" id="dot"></div>
+    <span id="status-txt">พร้อมใช้งาน — เลือกช่องด้านบน</span>
+  </div>
+
+  <div class="proxy-note">
+    <i class="ti ti-info-circle" aria-hidden="true"></i>
+    <strong>หมายเหตุ:</strong> หากวิดีโอไม่ขึ้น ลองติดตั้ง extension 
+    <a href="https://chrome.google.com/webstore/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino" target="_blank">CORS Unblock</a> 
+    แล้วเลือก "ไม่ใช้ proxy" หรือลองเปลี่ยน proxy จากรายการ
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/dashjs@4.7.4/dist/dash.all.min.js"></script>
+<script>
+const CHANNELS = [
+  {
+    id: "hbo-hits",
+    name: "HBO Hits",
+    logo: "https://i.imgur.com/tGSLZWz.png",
+    url: "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbohits/default1/index.mpd",
+    kid: "b04ae8017b5b4601a5a0c9060f6d5b7d",
+    key: "a8795f3bdb8a4778b7e888ee484cc7a1"
+  },
+  {
+    id: "hbo-family",
+    name: "HBO Family",
+    logo: "https://i.imgur.com/SefoKAw.png",
+    url: "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbofam/default/index.mpd",
+    kid: "872910c843294319800d85f9a0940607",
+    key: "f79fd895b79c590708cf5e8b5c6263be"
+  },
+  {
+    id: "hbo-signature",
+    name: "HBO Signature",
+    logo: "https://i.imgur.com/3L9QRDw.png",
+    url: "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbosign/default/index.mpd",
+    kid: "a06ca6c275744151895762e0346380f5",
+    key: "559da1b63eec77b5a942018f14d3f56f"
+  }
+];
+
+let player = null;
+let selectedCh = null;
+
+function hexToBase64(hex) {
+  const bytes = new Uint8Array(hex.match(/.{2}/g).map(b => parseInt(b, 16)));
+  let bin = "";
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+function setStatus(msg, state) {
+  const dot = document.getElementById("dot");
+  const txt = document.getElementById("status-txt");
+  txt.textContent = msg;
+  dot.className = "dot" + (state === "err" ? " err" : state === "loading" ? " loading" : "");
+}
+
+function showOverlay(html) {
+  const ov = document.getElementById("overlay");
+  ov.innerHTML = html;
+  ov.classList.remove("hidden");
+}
+
+function hideOverlay() {
+  document.getElementById("overlay").classList.add("hidden");
+}
+
+const grid = document.getElementById("ch-grid");
+CHANNELS.forEach(ch => {
+  const btn = document.createElement("button");
+  btn.className = "ch-btn";
+  btn.id = "btn-" + ch.id;
+  btn.innerHTML = `<img src="${ch.logo}" alt="${ch.name}" onerror="this.style.display='none'"><span>${ch.name}</span>`;
+  btn.onclick = () => selectChannel(ch);
+  grid.appendChild(btn);
+});
+
+function selectChannel(ch) {
+  selectedCh = ch;
+  document.querySelectorAll(".ch-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("btn-" + ch.id).classList.add("active");
+  setStatus("เลือกแล้ว: " + ch.name + " — กด เล่น เพื่อเริ่ม", "ok");
+  showOverlay(`<div class="spinner"></div><div class="ov-text">เลือก: ${ch.name}</div>`);
+}
+
+document.getElementById("play-btn").onclick = () => {
+  if (!selectedCh) {
+    setStatus("กรุณาเลือกช่องก่อน", "err");
+    return;
+  }
+  startPlayer(selectedCh);
+};
+
+function startPlayer(ch) {
+  const proxy = document.getElementById("proxy-sel").value;
+  const mpdUrl = proxy ? proxy + encodeURIComponent(ch.url) : ch.url;
+
+  setStatus("กำลังโหลด: " + ch.name + "...", "loading");
+  showOverlay(`<div class="spinner"></div><div class="ov-text">กำลังโหลด ${ch.name}...</div>`);
+
+  if (player) {
+    try { player.destroy(); } catch(e) {}
+    player = null;
+  }
+
+  const vid = document.getElementById("vid");
+
+  const kidB64 = hexToBase64(ch.kid);
+  const keyB64 = hexToBase64(ch.key);
+
+  const clearKeyObj = {};
+  clearKeyObj[kidB64] = keyB64;
+
+  player = dashjs.MediaPlayer().create();
+  player.initialize(vid, mpdUrl, true);
+
+  player.setProtectionData({
+    "org.w3.clearkey": {
+      clearkeys: clearKeyObj
+    }
+  });
+
+  player.updateSettings({
+    streaming: {
+      abr: { autoSwitchBitrate: { audio: true, video: true } },
+      liveCatchup: { enabled: true }
+    },
+    errors: { recoverAttempts: { mediaErrorDecode: 3 } }
+  });
+
+  player.on(dashjs.MediaPlayer.events.PLAYBACK_STARTED, () => {
+    setStatus("กำลังเล่น: " + ch.name, "ok");
+    hideOverlay();
+  });
+
+  player.on(dashjs.MediaPlayer.events.ERROR, (e) => {
+    const msg = e.error?.message || e.error?.code || JSON.stringify(e.error);
+    setStatus("ข้อผิดพลาด: " + msg, "err");
+    showOverlay(`<div class="ov-text" style="color:#f87;">เกิดข้อผิดพลาด</div><div class="ov-text" style="font-size:11px;max-width:280px;text-align:center;">${msg}</div>`);
+  });
+
+  player.on(dashjs.MediaPlayer.events.PLAYBACK_WAITING, () => {
+    showOverlay(`<div class="spinner"></div><div class="ov-text">กำลังบัฟเฟอร์...</div>`);
+  });
+
+  player.on(dashjs.MediaPlayer.events.PLAYBACK_PLAYING, () => {
+    hideOverlay();
+  });
+}
+</script>
+
 
 </body>
 </html>
