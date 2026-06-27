@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>- JW + HLS mpd</title>
+<script>
+/* ==========================
+   ข้อมูลต้นฉบับ
+========================== */
+
+const PORTAL_URL = "https://imanpost.github.io/iptvnew/";
+const MAC_ADDRESS = "00:11:22:33:44:55";
+
+/* ==========================
+   Base64
+========================== */
+
+const URL_BASE64 = "YUhSMGNEb3ZMMmx0WVc1d2IzTjBMbWRwZEdoMVlpNXBieTlwY0hSMmJtVjMv";
+const MAC_BASE64 = "MDA6MTE6MjI6MzM6NDQ6NTU=";
+
+/* ==========================
+   ถอดรหัส
+========================== */
+
+const CONFIG = {
+    p: atob(URL_BASE64),
+    m: atob(MAC_BASE64)
+};
+
+/* ==========================
+   ปิดคลิกขวา
+========================== */
+
+document.addEventListener("contextmenu", function(e){
+    e.preventDefault();
+    return false;
+});
+
+/* ==========================
+   ปิด F12 / DevTools Shortcut
+========================== */
+
+document.addEventListener("keydown", function(e){
+
+    if (
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey &&
+            ["I","J","C"].includes(e.key.toUpperCase())
+        ) ||
+        (e.ctrlKey && e.key.toUpperCase() === "U")
+    ){
+        e.preventDefault();
+        return false;
+    }
+
+});
+
+/* ==========================
+   ปิดลากรูป
+========================== */
+
+document.addEventListener("dragstart", function(e){
+    e.preventDefault();
+});
+
+/* ==========================
+   ปิดเลือกข้อความ
+========================== */
+
+document.addEventListener("selectstart", function(e){
+    e.preventDefault();
+});
+
+/* ==========================
+   ตรวจ DevTools
+========================== */
+
+setInterval(function(){
+
+    const widthThreshold =
+        window.outerWidth - window.innerWidth > 160;
+
+    const heightThreshold =
+        window.outerHeight - window.innerHeight > 160;
+
+    if(widthThreshold || heightThreshold){
+
+        document.body.innerHTML = `
+        <div style="
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+            font-size:24px;
+            font-family:sans-serif;">
+            Access Denied
+        </div>`;
+    }
+
+},1000);
+</script>
+
+<style>
+*{
+    user-select:none;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    -webkit-touch-callout:none;
+}
+html,body{
+    width:100%;
+    height:100%;
+    margin:0;
+}
+</style>
+</script>
+<script src="https://ssl.p.jwpcdn.com/player/v/8.26.0/jwplayer.js"></script>
+<script>
+jwplayer.key = "XSuP4qMl+9tK17QNb+4+th2Pm9AWgMO/cYH8CI0HGGr7bdjo";
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+    .tv-focus{
+    border:3px solid #00ff88;
+    background:#333 !important;
+    transform:scale(1.02);
+}
+
+.item,
+.group-btn,
+video{
+    outline:none;
+}
+
+*:focus{
+    outline:none;
+}
+body{
+    margin:0;
+    padding:20px;
+    background:#111;
+    color:#fff;
+    font-family:Arial,sans-serif;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+}
+
+.player-wrapper{
+    width:100%;
+    position:relative;
+    padding-top:56.25%;
+    background:#000;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+#player,
+#fallbackVideo{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+}
+
+#fallbackVideo{
+    background:#000;
+    object-fit:contain;
+}
+
+.current{
+    padding:15px 0;
+    font-size:20px;
+    font-weight:bold;
+    color:#00ff88;
+}
+
+.groups{
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    margin:15px 0;
+    padding-bottom:10px;
+}
+
+.group-btn{
+    border:none;
+    padding:10px 16px;
+    border-radius:20px;
+    background:#222;
+    color:#fff;
+    cursor:pointer;
+    white-space:nowrap;
+}
+
+.group-btn.active{
+    background:#00ff88;
+    color:#000;
+    font-weight:bold;
+}
+
+.playlist{
+    background:#1c1c1c;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px;
+    cursor:pointer;
+    border-bottom:1px solid #333;
+}
+
+.item:hover{
+    background:#2a2a2a;
+}
+
+.item img{
+    width:60px;
+    height:60px;
+    object-fit:contain;
+    background:#fff;
+    border-radius:6px;
+}
+
+.active-channel{
+    background:#004d33 !important;
+}
+
+video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+    .player-wrapper.tv-focus{
+    border:4px solid #00ff88;
+}
+</style>
+</head>
+<p style="text-align: center;">🚩 >>> เลื่อนขึ้นลง ตัวเล่นวีดีโอ. รีโมทกล่อง .AndroidTV ปุ่ม CH ↨. เต็มจอ! เมาส์กด </p>
+<body>
+
+<div class="container">
+
+<div class="player-wrapper">
+    <div id="player"></div>
+
+<video
+    id="fallbackVideo"
+    controls
+    autoplay
+    playsinline
+    preload="auto"
+    tabindex="-1"
+    style="display:none">
+</video>
+</div>
+
+<div id="current" class="current">
+เลือกช่องเพื่อเริ่มเล่น
+</div>
+
+<div id="playlist" class="playlist"></div>
+
+</div>
+
+<script>
+
+// =========================
+// PLAYLIST
+// =========================
+
+const m3uData = `
+
+#EXTINF:-1 group-title="️🎞️ หนังภาพยนตร์" tvg-logo="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/0147.png",CINEMAX
+#KODIPROP:inputstream.adaptive.license_type=clearkey
+#KODIPROP:inputstream.adaptive.license_key=f48caba466394e93b50780f21798787a:9a074a10db4342e7937076b3e52f6029
+https://udn-streamer1.cdn.3bbtv.com:8443/3bb/live/107/107.mpd
+#EXTINF:-1 group-title="️🎞️ หนังภาพยนตร์" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/f4/Food_Network_-_Logo_2016.png",Food Network
+#KODIPROP:inputstream.adaptive.license_type=clearkey
+#KODIPROP:inputstream.adaptive.license_key=d4b9d55410d24905920e57664a047116:d821110f280f4545ae0227d5784af199
+https://cco-streamer1.cdn.3bbtv.com:8443/3bb/live/205/205.mpd
+#EXTINF:-1 group-title="️🎞️ หนังภาพยนตร์" tvg-logo="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon//0151.png",HBO Hits
+#KODIPROP:inputstream.adaptive.license_type=clearkey
+#KODIPROP:inputstream.adaptive.license_key=b04ae8017b5b4601a5a0c9060f6d5b7d:a8795f3bdb8a4778b7e888ee484cc7a1
+https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbohits/default1/index.mpd
+#EXTINF:-1 group-title="️🎞️ หนังภาพยนตร์" tvg-logo="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE/channelicon/0150.png",HBO Family
+#KODIPROP:inputstream.adaptive.license_type=clearkey
+#KODIPROP:inputstream.adaptive.license_key=872910c843294319800d85f9a0940607:f79fd895b79c590708cf5e8b5c6263be
+https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbofam/default/index.mpd
+
+
+#EXTINF:-1 tvg-id="" tvg-logo="https://ais-s.ais-vidnt.com/ais/play/origin/LIVE//channelicon/R_0148.png" group-title="🎞️ หนัง",HBO
+#KODIPROP:inputstream.adaptive.stream_headers=Origin=https://www.indihometv.com
+#KODIPROP:inputstream.adaptive.stream_headers=Referer=https://www.indihometv.com
+#KODIPROP:inputstreamaddon=inputstream.adaptive
+#KODIPROP:inputstream.adaptive.stream_headers=Connection=keep-alive
+#KODIPROP:inputstream.adaptive.stream_headers=User-Agent=|user-agent=IndiHomeTV/8.7.12 (Linux;Android 15.0.0;) ExoPlayerLib/2.19.1& Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36
+#https://indihuy.streamized.net/atm/DASH/hbo/hbo-avc1_2500000=7-3277707030000000.mpd
+#https://indihuy.streamized.net/atm/DASH/hbo/manifest.mpd
+
+#EXTINF:-1 tvg-id="hbo-hits" tvg-logo="https://i.imgur.com/tGSLZWz.png" group-title="🎞️ หนัง",HBO Hits
+#KODIPROP:inputstream.adaptive.license_type=clearkey
+#KODIPROP:inputstream.adaptive.license_key=b04ae8017b5b4601a5a0c9060f6d5b7d:a8795f3bdb8a4778b7e888ee484cc7a1
+https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbohits/default1/index.mpd
+
+#EXTINF:-1 tvg-id="hbo-family" tvg-logo="https://i.imgur.com/SefoKAw.png" group-title="🎞️ หนัง",HBO Family
+#KODIPROP:inputstream.adaptive.license_type=clearkey
+#KODIPROP:inputstream.adaptive.license_key=872910c843294319800d85f9a0940607:f79fd895b79c590708cf5e8b5c6263be
+https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbofam/default/index.mpd
+
+#EXTINF:-1 tvg-id="hbo-signature" tvg-logo="https://i.imgur.com/3L9QRDw.png" group-title="🎞️ หนัง",HBO Signature
+#KODIPROP:inputstream.adaptive.license_type=clearkey
+#KODIPROP:inputstream.adaptive.license_key=a06ca6c275744151895762e0346380f5:559da1b63eec77b5a942018f14d3f56f
+https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbosign/default/index.mpd
+
+
+
+#############################################################################################
+
+   
+
+
+
+
+
+`;
+
+// =========================
+
+const playlist=document.getElementById("playlist");
+const current=document.getElementById("current");
+const fallbackVideo=document.getElementById("fallbackVideo");
+
+let channels=[];
+let jw=null;
+let hls=null;
+let currentChannel=null;
+
+// =========================
+// PARSE M3U
+// =========================
+
+function parseM3U(text){
+
+    const lines=text.split("\n");
+    const result=[];
+
+    let name="";
+    let logo="";
+    let group="อื่นๆ";
+
+    let drm=false;
+    let keyId="";
+    let key="";
+
+    for(const line of lines){
+
+        const l=line.trim();
+
+        if(!l) continue;
+
+        if(l.startsWith("#EXTINF")){
+
+            const g=l.match(/group-title="([^"]+)"/);
+            const lg=l.match(/tvg-logo="([^"]+)"/);
+
+            group=g ? g[1] : "อื่นๆ";
+            logo=lg ? lg[1] : "";
+
+            name=l.split(",").pop().trim();
+
+            drm=false;
+            keyId="";
+            key="";
+        }
+
+        else if(
+            l.includes("license_key=")
+        ){
+
+            const data=l.split("license_key=")[1];
+
+            if(data.includes(":")){
+
+                const parts=data.split(":");
+
+                drm=true;
+                keyId=parts[0].trim();
+                key=parts[1].trim();
+            }
+        }
+
+        else if(
+            l.startsWith("http")
+        ){
+
+            if(!name){
+
+                name="Unknown Channel";
+            }
+
+            result.push({
+
+                name,
+                logo,
+                group,
+
+                url:l,
+
+                drm,
+                keyId,
+                key
+            });
+        }
+    }
+
+    return result;
+}
+
+// =========================
+// HLS PLAYER
+// =========================
+
+function fallbackPlay(url){
+
+    document.getElementById("player").style.display="none";
+    fallbackVideo.style.display="block";
+
+    if(hls){
+        hls.destroy();
+        hls=null;
+    }
+
+    fallbackVideo.pause();
+    fallbackVideo.removeAttribute("src");
+
+    if(Hls.isSupported()){
+
+        hls=new Hls({
+            enableWorker:true,
+            lowLatencyMode:true
+        });
+
+        hls.loadSource(url);
+        hls.attachMedia(fallbackVideo);
+
+        hls.on(Hls.Events.MANIFEST_PARSED,()=>{
+
+            fallbackVideo.play().catch(()=>{});
+
+        });
+
+    }
+    else if(fallbackVideo.canPlayType("application/vnd.apple.mpegurl")){
+
+        fallbackVideo.src=url;
+
+        fallbackVideo.play().catch(()=>{});
+    }
+}
+
+// =========================
+// JW PLAYER
+// =========================
+
+function playJW(channel){
+
+    fallbackVideo.pause();
+
+    document.getElementById("player").style.display="block";
+    fallbackVideo.style.display="none";
+
+    let config={
+
+        file:channel.url,
+
+        width:"100%",
+
+        aspectratio:"16:9",
+
+        autostart:true
+    };
+
+    if(
+        channel.url
+        .toLowerCase()
+        .includes(".mpd")
+    ){
+
+        config.type="dash";
+
+        if(channel.drm){
+
+            config.drm={
+
+                clearkey:{
+
+                    keyId:channel.keyId,
+
+                    key:channel.key
+
+                }
+
+            };
+        }
+    }
+
+    try{
+
+        if(!jw){
+
+            jw=jwplayer("player")
+            .setup(config);
+
+        }else{
+
+            jw.remove();
+
+            jw=jwplayer("player")
+            .setup(config);
+        }
+
+    }catch(e){
+
+        console.log(e);
+    }
+}
+
+// =========================
+// PLAY CHANNEL
+// =========================
+
+function playChannel(channel){
+
+    currentChannel=channel;
+
+    localStorage.setItem(
+        "lastChannel",
+        JSON.stringify(channel)
+    );
+
+    current.textContent=
+    "กำลังเล่น : "+channel.name;
+
+    document
+    .querySelectorAll(".item")
+    .forEach(el=>
+        el.classList.remove(
+            "active-channel"
+        )
+    );
+
+    const active=document.querySelector(
+        `[data-url="${channel.url}"]`
+    );
+
+    if(active)
+        active.classList.add(
+            "active-channel"
+        );
+
+    const url=
+    channel.url.toLowerCase();
+
+    if(url.includes(".m3u8")){
+
+        fallbackPlay(
+            channel.url
+        );
+
+    }
+
+    else if(url.includes(".mpd")){
+
+        playJW(channel);
+
+    }
+
+    else{
+
+        playJW(channel);
+      
+    }
+}
+
+// =========================
+// RENDER LIST
+// =========================
+
+function renderList(list){
+
+    playlist.innerHTML="";
+
+    list.forEach(ch=>{
+
+        const div=document.createElement("div");
+
+        div.className="item";
+        
+
+        div.dataset.url=ch.url;
+
+        div.innerHTML=`
+        <img
+        src="${ch.logo}"
+        onerror="this.src='https://via.placeholder.com/60'">
+
+        <div>
+            <div>${ch.name}</div>
+            <small>${ch.group}</small>
+        </div>
+        `;
+
+        div.onclick=()=>playChannel(ch);
+
+        playlist.appendChild(div);
+    });
+    setTimeout(()=>{
+    selectedIndex=0;
+    focusItem(0);
+},100);
+}
+
+// =========================
+// GROUPS
+// =========================
+
+function renderGroups(){
+
+    const groups=[
+        ...new Set(
+            channels.map(c=>c.group)
+        )
+    ];
+
+    const groupDiv=
+        document.createElement("div");
+
+    groupDiv.className="groups";
+
+    playlist.parentNode.insertBefore(
+        groupDiv,
+        playlist
+    );
+
+    groups.forEach((g,index)=>{
+
+        const btn=
+            document.createElement("button");
+
+        btn.className="group-btn";
+
+        if(index===0)
+            btn.classList.add("active");
+
+        btn.textContent=g;
+
+        btn.onclick=()=>{
+
+            document
+            .querySelectorAll(".group-btn")
+            .forEach(b=>
+                b.classList.remove("active")
+            );
+
+            btn.classList.add("active");
+
+            renderList(
+                channels.filter(
+                    c=>c.group===g
+                )
+            );
+        };
+
+        groupDiv.appendChild(btn);
+    });
+
+    renderList(
+        channels.filter(
+            c=>c.group===groups[0]
+        )
+    );
+    setTimeout(()=>{
+    focusItem(0);
+},300);
+}
+
+// =========================
+// INIT
+// =========================
+
+channels=parseM3U(m3uData);
+
+renderGroups();
+
+const saved=
+localStorage.getItem(
+    "lastChannel"
+);
+
+if(saved){
+
+    try{
+
+        playChannel(
+            JSON.parse(saved)
+        );
+
+    }catch(e){}
+
+}
+    
+// =========================
+// โค้ดเสริม
+// =========================
+// =========================
+// TV NAVIGATION (STABLE)
+// =========================
+
+let selectedIndex = 0;
+let selectedGroup = 0;
+
+function focusItem(index){
+
+    const items = document.querySelectorAll(".item");
+
+    if(!items.length) return;
+
+    if(index < 0){
+        index = 0;
+    }
+
+    if(index >= items.length){
+        index = items.length - 1;
+    }
+
+    items.forEach(el=>{
+        el.classList.remove("tv-focus");
+    });
+
+    selectedIndex = index;
+
+    items[index].classList.add("tv-focus");
+
+    items[index].scrollIntoView({
+        block:"nearest",
+        behavior:"smooth"
+    });
+}
+
+function changeGroup(dir){
+
+    const groups =
+    document.querySelectorAll(".group-btn");
+
+    if(!groups.length) return;
+
+    selectedGroup += dir;
+
+    if(selectedGroup < 0){
+        selectedGroup = 0;
+    }
+
+    if(selectedGroup >= groups.length){
+        selectedGroup = groups.length - 1;
+    }
+
+    groups[selectedGroup].click();
+
+    setTimeout(()=>{
+        focusItem(0);
+    },150);
+}
+
+// remote
+document.addEventListener("keydown",(e)=>{
+
+    const items =
+    document.querySelectorAll(".item");
+
+    switch(e.keyCode){
+
+        case 38: // UP
+
+            e.preventDefault();
+
+            focusItem(
+                selectedIndex - 1
+            );
+
+            break;
+
+        case 40: // DOWN
+
+            e.preventDefault();
+
+            focusItem(
+                selectedIndex + 1
+            );
+
+            break;
+
+        case 37: // LEFT
+
+            e.preventDefault();
+
+            changeGroup(-1);
+
+            break;
+
+        case 39: // RIGHT
+
+            e.preventDefault();
+
+            changeGroup(1);
+
+            break;
+
+        case 13: // OK
+
+            e.preventDefault();
+
+            if(items[selectedIndex]){
+                items[selectedIndex].click();
+            }
+
+            break;
+
+        case 166: // CH+
+
+            e.preventDefault();
+
+            if(selectedIndex < items.length-1){
+
+                focusItem(selectedIndex+1);
+
+                if(items[selectedIndex]){
+                    items[selectedIndex].click();
+                }
+            }
+
+            break;
+
+        case 167: // CH-
+
+            e.preventDefault();
+
+            if(selectedIndex > 0){
+
+                focusItem(selectedIndex-1);
+
+                if(items[selectedIndex]){
+                    items[selectedIndex].click();
+                }
+            }
+
+            break;
+    }
+});
+
+// mouse support
+document.addEventListener("mousemove",(e)=>{
+
+    const item = e.target.closest(".item");
+
+    if(!item) return;
+
+    const items =
+    [...document.querySelectorAll(".item")];
+
+    const idx = items.indexOf(item);
+
+    if(idx >= 0){
+
+        items.forEach(el=>{
+            el.classList.remove("tv-focus");
+        });
+
+        selectedIndex = idx;
+
+        item.classList.add("tv-focus");
+    }
+
+});
+
+// initial focus
+setTimeout(()=>{
+    focusItem(0);
+},500);
+    
+
+    
+</script>
+
+</body>
+
+   
+<p style="text-align: center;"> แอพทดลอง! Beta1 จัดทำขึ้นเพื่อความบันเทิง.ภายในครอบครัว.เท่านั้น @ ไม่ได้จำหน่าย By NETI กลุ่ม Android ' Box TV Thai  </p> 
+</html>
