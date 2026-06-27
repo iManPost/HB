@@ -1,53 +1,74 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8" />
-    <title>เล่น HBO Hits</title>
-    <!-- รวม Dash.js สำหรับรองรับ MPEG-DASH -->
-    <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #222;
-            color: #fff;
-            text-align: center;
-            padding: 20px;
-        }
-        #videoPlayer {
-            width: 80%;
-            max-width: 800px;
-            height: auto;
-        }
-        #logo {
-            width: 100px;
-            margin-bottom: 10px;
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HBO Hits - DASH ClearKey Demo</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: #000; height: 100%; }
+    #video { width: 100%; height: 100vh; background: #000; }
+    #log { position: fixed; bottom: 0; left: 0; right: 0; max-height: 35vh; overflow: auto;
+           font: 12px/1.4 monospace; color: #0f0; background: rgba(0,0,0,0.7); padding: 8px; }
+  </style>
+  <!-- Shaka Player (official CDN) -->
+  <script src="[cdnjs.cloudflare.com](https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.9.2/shaka-player.compiled.min.js)" integrity="sha512-y/0xwH6v2YhJz8gWQ3qT3Hq1qQFi1gDtuq7FQm3eY2p8q0o8P0l6Y8R5n2o4u9vJ7T8Hq7dWk9l8q4f3m3WvSQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
-    <h1>ชม HBO Hits</h1>
-    <img src="https://i.imgur.com/tGSLZWz.png" alt="HBO Logo" id="logo" />
-    <video id="videoPlayer" controls></video>
-    
-    <script>
-        const url = "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbohits/default1/index.mpd";
-        const player = dashjs.MediaPlayer().create();
-        const video = document.getElementById('videoPlayer');
+  <video id="video" autoplay controls playsinline></video>
+  <pre id="log"></pre>
 
-        // ตั้งค่า license key สำหรับ DRM (ถ้าจำเป็น)
-player.setProtectionData({
-    "com.widevine.alpha": {
-        "serverURL": "https://license-server-url", // URL ของ License Server
-        "httpHeaders": {
-            "Authorization": "Bifrost b04ae8017b5b4601a5a0c9060f6d5b7d:a8795f3bdb8a4778b7e888ee484cc7a1"
+  <script>
+    const MPD_URL = "[qp-pldt-live-bpk-02-prod.akamaized.net](https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbohits/default1/index.mpd)";
+
+    // ClearKey: key ID and key must be base64-url or hex; Shaka accepts both via config.
+    // จากข้อมูลที่ให้มา (KODI clearkey) เป็น hex: keyId:key
+    const CLEARKEY_HEX_KEY_ID = "b04ae8017b5b4601a5a0c9060f6d5b7d";
+    const CLEARKEY_HEX_KEY    = "a8795f3bdb8a4778b7e888ee484cc7a1";
+
+    const logEl = document.getElementById('log');
+    function log(msg) { console.log(msg); logEl.textContent += msg + "\n"; }
+
+    async function init() {
+      if (!shaka.Player.isBrowserSupported()) {
+        log("This browser does not support the required media features.");
+        return;
+      }
+
+      const video = document.getElementById('video');
+      const player = new shaka.Player(video);
+
+      // Logging
+      player.addEventListener('error', e => log('Player error: ' + (e?.detail?.message || e)));
+      video.addEventListener('error', () => log('Media error: ' + (video.error?.message || video.error?.code)));
+
+      // Configure ClearKey DRM
+      // Shaka expects a map of { keyId: key }. Hex is allowed when you specify 'drm.clearKeys'.
+      player.configure({
+        drm: {
+          clearKeys: {
+            // keyId: key (both hex)
+            [CLEARKEY_HEX_KEY_ID]: CLEARKEY_HEX_KEY
+          }
+        },
+        streaming: {
+          lowLatencyMode: false,
+          bufferingGoal: 30
         }
-    }
-});
+      });
 
-        player.initialize(video, url, true);
-    </script>
+      try {
+        log("Loading manifest...");
+        await player.load(MPD_URL);
+        log("Loaded.");
+        // Optional: set preferred audio/text
+        // player.setPreferredAudioLanguage('en');
+        // player.setTextTrackVisibility(true);
+      } catch (err) {
+        log("Load error: " + (err?.message || err));
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
 </body>
 </html>
