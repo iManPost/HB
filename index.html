@@ -1,74 +1,93 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HBO Hits - DASH ClearKey Demo</title>
-  <style>
-    html, body { margin: 0; padding: 0; background: #000; height: 100%; }
-    #video { width: 100%; height: 100vh; background: #000; }
-    #log { position: fixed; bottom: 0; left: 0; right: 0; max-height: 35vh; overflow: auto;
-           font: 12px/1.4 monospace; color: #0f0; background: rgba(0,0,0,0.7); padding: 8px; }
-  </style>
-  <!-- Shaka Player (official CDN) -->
-  <script src="[cdnjs.cloudflare.com](https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.9.2/shaka-player.compiled.min.js)" integrity="sha512-y/0xwH6v2YhJz8gWQ3qT3Hq1qQFi1gDtuq7FQm3eY2p8q0o8P0l6Y8R5n2o4u9vJ7T8Hq7dWk9l8q4f3m3WvSQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Shaka Player Demo</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.9.2/shaka-player.compiled.min.js"></script>
+
+<style>
+html,body{
+    margin:0;
+    background:#000;
+    height:100%;
+}
+
+video{
+    width:100%;
+    height:100vh;
+    background:#000;
+}
+
+#log{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    max-height:180px;
+    overflow:auto;
+    background:rgba(0,0,0,.7);
+    color:#0f0;
+    padding:10px;
+    font-family:monospace;
+    font-size:13px;
+}
+</style>
 </head>
+
 <body>
-  <video id="video" autoplay controls playsinline></video>
-  <pre id="log"></pre>
 
-  <script>
-    const MPD_URL = "[qp-pldt-live-bpk-02-prod.akamaized.net](https://udn-streamer1.cdn.3bbtv.com:8443/3bb/live/29/29.mpd)";
+<video id="video" controls autoplay playsinline></video>
 
-    // ClearKey: key ID and key must be base64-url or hex; Shaka accepts both via config.
-    // จากข้อมูลที่ให้มา (KODI clearkey) เป็น hex: keyId:key
-    const CLEARKEY_HEX_KEY_ID = "96a14b36335645b391bbbb48c424fec7";
-    const CLEARKEY_HEX_KEY    = "e6971b27837a4822832d8215156bb516";
+<pre id="log"></pre>
 
-    const logEl = document.getElementById('log');
-    function log(msg) { console.log(msg); logEl.textContent += msg + "\n"; }
+<script>
 
-    async function init() {
-      if (!shaka.Player.isBrowserSupported()) {
-        log("This browser does not support the required media features.");
+const MPD_URL = "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbohits/default1/index.mpd";
+
+const log = document.getElementById("log");
+
+function println(msg){
+    console.log(msg);
+    log.textContent += msg + "\n";
+}
+
+async function init(){
+
+    if(!shaka.Player.isBrowserSupported()){
+        println("Browser ไม่รองรับ");
         return;
-      }
-
-      const video = document.getElementById('video');
-      const player = new shaka.Player(video);
-
-      // Logging
-      player.addEventListener('error', e => log('Player error: ' + (e?.detail?.message || e)));
-      video.addEventListener('error', () => log('Media error: ' + (video.error?.message || video.error?.code)));
-
-      // Configure ClearKey DRM
-      // Shaka expects a map of { keyId: key }. Hex is allowed when you specify 'drm.clearKeys'.
-      player.configure({
-        drm: {
-          clearKeys: {
-            // keyId: key (both hex)
-            [CLEARKEY_HEX_KEY_ID]: CLEARKEY_HEX_KEY
-          }
-        },
-        streaming: {
-          lowLatencyMode: false,
-          bufferingGoal: 30
-        }
-      });
-
-      try {
-        log("Loading manifest...");
-        await player.load(MPD_URL);
-        log("Loaded.");
-        // Optional: set preferred audio/text
-        // player.setPreferredAudioLanguage('en');
-        // player.setTextTrackVisibility(true);
-      } catch (err) {
-        log("Load error: " + (err?.message || err));
-      }
     }
 
-    document.addEventListener('DOMContentLoaded', init);
-  </script>
+    const video=document.getElementById("video");
+
+    const player=new shaka.Player(video);
+
+    player.addEventListener("error",e=>{
+        println("Player Error : "+JSON.stringify(e.detail));
+    });
+
+    try{
+
+        println("Loading...");
+
+        await player.load(MPD_URL);
+
+        println("Load Success");
+
+    }catch(err){
+
+        println(err);
+
+    }
+
+}
+
+document.addEventListener("DOMContentLoaded",init);
+
+</script>
+
 </body>
 </html>
