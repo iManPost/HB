@@ -1,105 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>TV9 | Media Prima</title>
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.7.7/dist/controls.css">
-  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.7/dist/shaka-player.ui.debug.js"></script>
-  
-  <style>
-  *{margin:0;padding:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;outline:none;-webkit-border:0;-moz-border:0;border:0;cursor:none;-webkit-user-select:none;-moz-user-select:none;user-select:none;}html,body{width:100vw;width:100svw;height:100vh;height:100svh;background:#000;overflow:hidden;}video{width:100vw;width:100svw;height:100vh;height:100svh;overflow:hidden}.theme-blue .shaka-controls-button-panel .material-icons-round{color:#eee}.theme-blue .shaka-overflow-menu,.theme-blue .shaka-settings-menu{background:rgba(0,0,0,0.8);border-radius:4px;}.theme-blue .shaka-overflow-menu span+span{font-size:80%;color:#fff;padding-top:2px}.theme-blue .shaka-overflow-menu button,.theme-blue .shaka-settings-menu button{color:#fff;transition:all .2s linear;}.theme-blue .shaka-overflow-menu button:hover,.theme-blue .shaka-settings-menu button:hover{background:#3275e4;cursor:auto}
-  </style>
-
+    <meta charset="UTF-8" />
+    <title>เล่น HBO Hits</title>
+    <!-- รวม Dash.js สำหรับรองรับ MPEG-DASH -->
+    <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+        #videoPlayer {
+            width: 80%;
+            max-width: 800px;
+            height: auto;
+        }
+        #logo {
+            width: 100px;
+            margin-bottom: 10px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
+    <h1>ชม HBO Hits</h1>
+    <img src="https://i.imgur.com/tGSLZWz.png" alt="HBO Logo" id="logo" />
+    <video id="videoPlayer" controls></video>
+    
+    <script>
+        const url = "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbohits/default1/index.mpd";
+        const player = dashjs.MediaPlayer().create();
+        const video = document.getElementById('videoPlayer');
 
-  <div class="theme-blue">
-    <video data-shaka-player id="video" autoplay="true" preload="auto" poster="https://i.imgur.com/zlzQwXY.jpg"></video>
-  </div>
-
-  <script>
-    const manifestUri = 'http://6395online.com:8080/live/Iptv6988/0905692638/133.m3u8';
-
-    function initApp() {
-      shaka.polyfill.installAll();
-      if (shaka.Player.isBrowserSupported()) {
-        init();
-      } else {
-        console.error('Browser not supported!');
-      }
-    }
-
-    async function init() {
-      const video = document.getElementById('video');
-      const ui = video['ui'];
-      const controls = ui.getControls();
-      const player = controls.getPlayer();
-      const config = {
-        'seekBarColors': {
-          base: 'rgba(66, 133, 244, 0.35)',
-          buffered: 'rgba(66, 133, 244, 0.6)',
-          played: 'rgba(66, 133, 244, 0.8)',
-        },
-        'volumeBarColors': {
-          base: 'rgba(66, 133, 244, 0.8)',
-          level: 'rgb(66, 133, 244)',
+        // ตั้งค่า license key สำหรับ DRM (ถ้าจำเป็น)
+player.setProtectionData({
+    "com.widevine.alpha": {
+        "serverURL": "https://license-server-url", // URL ของ License Server
+        "httpHeaders": {
+            "Authorization": "Bifrost b04ae8017b5b4601a5a0c9060f6d5b7d:a8795f3bdb8a4778b7e888ee484cc7a1"
         }
-      }
-      ui.configure(config);
-
-      window.player = player;
-      window.ui = ui;
-      window.controls = controls;
-
-      player.addEventListener("error", onPlayerErrorEvent);
-      controls.addEventListener("error", onUIErrorEvent);
-
-      try {
-        await player.load(manifestUri);
-        console.log('The video has now been loaded!');
-      } catch (error) {
-        onPlayerError(error);
-      }
-
-      player.configure({
-        drm: {
-          clearKeys: {
-            '': ''
-          }
-        }
-      });
-
-      function onPlayerErrorEvent(errorEvent) {
-        onPlayerError(event.detail);
-      }
-
-      function onPlayerError(error) {
-        console.error('Error code', error.code + ':', 'Video could not be loaded!', '[Media not found].');
-      }
-
-      function onUIErrorEvent(errorEvent) {
-        onPlayerError(event.detail);
-      }
     }
+});
 
-    function initFailed(errorEvent) {
-      console.error('Unable to load the UI library!');
-    }
-
-    document.addEventListener('shaka-ui-loaded', init);
-    document.addEventListener('shaka-ui-load-failed', initFailed);
-    document.addEventListener('DOMContentLoaded', initApp);
-
-    Object.defineProperty(navigator, 'userAgent', {
-      get: function() { // Latest (Feb 18, 2024)
-        return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Firefox/122.0 Edg/121.0.2277.112 OPR/107.0.0.0 UCBrowser/16.3.0.1281 Vivaldi/6.5.3206.63 YaBrowser/23.9.0.2325 Yowser/2.5 Safari/537.36';
-      }
-    });
-  </script>
-
+        player.initialize(video, url, true);
+    </script>
 </body>
 </html>
