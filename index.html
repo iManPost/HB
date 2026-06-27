@@ -1,337 +1,105 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HBO MPD Player</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: #0f0f0f;
-    color: #eee;
-    min-height: 100vh;
-    padding: 20px;
-  }
-  h1 {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .channel-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
-    max-width: 800px;
-  }
-  .ch-btn {
-    background: #1a1a1a;
-    border: 1.5px solid #333;
-    border-radius: 10px;
-    padding: 12px 8px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    transition: border-color 0.15s, background 0.15s;
-    color: #ccc;
-  }
-  .ch-btn:hover { border-color: #555; background: #222; }
-  .ch-btn.active { border-color: #4a9eff; background: #0d2a4a; color: #4a9eff; }
-  .ch-btn img { width: 52px; height: 52px; object-fit: contain; }
-  .ch-btn span { font-size: 12px; font-weight: 500; text-align: center; }
-  .video-container {
-    max-width: 800px;
-    background: #000;
-    border-radius: 12px;
-    overflow: hidden;
-    aspect-ratio: 16/9;
-    position: relative;
-    margin-bottom: 12px;
-  }
-  video { width: 100%; height: 100%; display: block; }
-  .overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.75);
-    gap: 14px;
-  }
-  .overlay.hidden { display: none; }
-  .spinner {
-    width: 40px; height: 40px;
-    border: 3px solid rgba(255,255,255,0.2);
-    border-top-color: #4a9eff;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .ov-title { font-size: 16px; color: #fff; font-weight: 500; }
-  .ov-sub { font-size: 12px; color: #aaa; text-align: center; max-width: 360px; }
-  .status {
-    max-width: 800px;
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 12px;
-    color: #888;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; flex-shrink: 0; }
-  .dot.ok { background: #22c55e; }
-  .dot.err { background: #ef4444; }
-  .dot.loading { background: #f59e0b; animation: blink 1s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  .info-box {
-    max-width: 800px;
-    background: #1a1500;
-    border: 1px solid #4a3800;
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 12px;
-    color: #cca84a;
-    line-height: 1.7;
-    margin-bottom: 10px;
-  }
-  .info-box strong { color: #f5c842; }
-  .info-box a { color: #4a9eff; }
-  .info-box code {
-    background: #2a2000;
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-family: monospace;
-  }
-  .steps {
-    max-width: 800px;
-    background: #0d1f0d;
-    border: 1px solid #1a4a1a;
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 12px;
-    color: #88cc88;
-    line-height: 1.9;
-  }
-  .steps strong { color: #aaffaa; }
-  .play-btn {
-    background: #4a9eff;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 9px 20px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-bottom: 16px;
-  }
-  .play-btn:hover { background: #2a80ef; }
-  hr { border: none; border-top: 1px solid #222; max-width: 800px; margin: 16px 0; }
-</style>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>TV9 | Media Prima</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.7.7/dist/controls.css">
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.7/dist/shaka-player.ui.debug.js"></script>
+  
+  <style>
+  *{margin:0;padding:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;outline:none;-webkit-border:0;-moz-border:0;border:0;cursor:none;-webkit-user-select:none;-moz-user-select:none;user-select:none;}html,body{width:100vw;width:100svw;height:100vh;height:100svh;background:#000;overflow:hidden;}video{width:100vw;width:100svw;height:100vh;height:100svh;overflow:hidden}.theme-blue .shaka-controls-button-panel .material-icons-round{color:#eee}.theme-blue .shaka-overflow-menu,.theme-blue .shaka-settings-menu{background:rgba(0,0,0,0.8);border-radius:4px;}.theme-blue .shaka-overflow-menu span+span{font-size:80%;color:#fff;padding-top:2px}.theme-blue .shaka-overflow-menu button,.theme-blue .shaka-settings-menu button{color:#fff;transition:all .2s linear;}.theme-blue .shaka-overflow-menu button:hover,.theme-blue .shaka-settings-menu button:hover{background:#3275e4;cursor:auto}
+  </style>
+
 </head>
 <body>
 
-<h1>📺 HBO MPD Player</h1>
-
-<div class="channel-grid" id="ch-grid"></div>
-
-<button class="play-btn" id="play-btn">▶ เล่นช่องที่เลือก</button>
-
-<div class="video-container">
-  <video id="vid" controls crossorigin="anonymous"></video>
-  <div class="overlay" id="overlay">
-    <div class="ov-title">เลือกช่องด้านบน แล้วกด เล่น</div>
-    <div class="ov-sub">ต้องเปิดไฟล์นี้ในเบราว์เซอร์โดยตรง (ไม่ใช่ผ่านเว็บอื่น)</div>
+  <div class="theme-blue">
+    <video data-shaka-player id="video" autoplay="true" preload="auto" poster="https://i.imgur.com/zlzQwXY.jpg"></video>
   </div>
-</div>
 
-<div class="status"><div class="dot" id="dot"></div><span id="status-txt">พร้อมใช้งาน</span></div>
+  <script>
+    const manifestUri = 'http://6395online.com:8080/live/Iptv6988/0905692638/133.m3u8';
 
-<div class="info-box">
-  <strong>⚠️ วิธีแก้บล็อก CORS:</strong><br>
-  ไฟล์นี้ต้องเปิดใน Chrome/Edge โดยตรง และต้องติดตั้ง extension ก่อน:<br>
-  → <a href="https://chrome.google.com/webstore/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino" target="_blank">CORS Unblock</a> (แนะนำ) 
-  หรือ <a href="https://chromewebstore.google.com/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf" target="_blank">Allow CORS: Access-Control-Allow-Origin</a><br>
-  → เปิด extension ให้ active (ไอคอนเขียว) แล้วรีโหลดหน้านี้ แล้วกดเล่น
-</div>
-
-<div class="steps">
-  <strong>วิธีใช้ทีละขั้น:</strong><br>
-  1. ดาวน์โหลดไฟล์ <code>hbo-player.html</code> นี้ไว้ในเครื่อง<br>
-  2. ติดตั้ง extension CORS Unblock ใน Chrome<br>
-  3. เปิดไฟล์โดยลาก .html เข้า Chrome หรือ File → Open<br>
-  4. กด icon extension ให้เป็น "ON" (สีเขียว)<br>
-  5. เลือกช่องแล้วกด เล่น
-</div>
-
-<script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
-<script>
-const CHANNELS = [
-  {
-    id: "hbo-hits",
-    name: "HBO Hits",
-    logo: "https://i.imgur.com/tGSLZWz.png",
-    url: "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbohits/default1/index.mpd",
-    kid: "b04ae8017b5b4601a5a0c9060f6d5b7d",
-    key: "a8795f3bdb8a4778b7e888ee484cc7a1"
-  },
-  {
-    id: "hbo-family",
-    name: "HBO Family",
-    logo: "https://i.imgur.com/SefoKAw.png",
-    url: "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbofam/default/index.mpd",
-    kid: "872910c843294319800d85f9a0940607",
-    key: "f79fd895b79c590708cf5e8b5c6263be"
-  },
-  {
-    id: "hbo-signature",
-    name: "HBO Signature",
-    logo: "https://i.imgur.com/3L9QRDw.png",
-    url: "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_hbosign/default/index.mpd",
-    kid: "a06ca6c275744151895762e0346380f5",
-    key: "559da1b63eec77b5a942018f14d3f56f"
-  }
-];
-
-let player = null;
-let selectedCh = null;
-
-// Convert hex string to URL-safe Base64 (no padding)
-function hexToBase64url(hex) {
-  const bytes = new Uint8Array(hex.match(/.{2}/g).map(b => parseInt(b, 16)));
-  let binary = '';
-  bytes.forEach(b => binary += String.fromCharCode(b));
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-function setStatus(msg, state) {
-  document.getElementById('status-txt').textContent = msg;
-  const dot = document.getElementById('dot');
-  dot.className = 'dot' + (state ? ' ' + state : '');
-}
-
-function showOverlay(titleHtml, subHtml) {
-  const ov = document.getElementById('overlay');
-  ov.innerHTML = (titleHtml.includes('spinner') ? titleHtml : `<div class="ov-title">${titleHtml}</div>`) +
-                 (subHtml ? `<div class="ov-sub">${subHtml}</div>` : '');
-  ov.classList.remove('hidden');
-}
-
-function hideOverlay() {
-  document.getElementById('overlay').classList.add('hidden');
-}
-
-// Build channel buttons
-const grid = document.getElementById('ch-grid');
-CHANNELS.forEach(ch => {
-  const btn = document.createElement('button');
-  btn.className = 'ch-btn';
-  btn.id = 'btn-' + ch.id;
-  btn.innerHTML = `<img src="${ch.logo}" alt="${ch.name}" onerror="this.style.opacity=0.3"><span>${ch.name}</span>`;
-  btn.onclick = () => {
-    selectedCh = ch;
-    document.querySelectorAll('.ch-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    setStatus('เลือก: ' + ch.name + ' — กด เล่น', 'ok');
-  };
-  grid.appendChild(btn);
-});
-
-document.getElementById('play-btn').onclick = () => {
-  if (!selectedCh) {
-    setStatus('กรุณาเลือกช่องก่อน', 'err');
-    return;
-  }
-  startPlayer(selectedCh);
-};
-
-function startPlayer(ch) {
-  if (player) {
-    try { player.destroy(); } catch(e) {}
-    player = null;
-  }
-
-  const vid = document.getElementById('vid');
-  setStatus('กำลังโหลด ' + ch.name + '...', 'loading');
-  showOverlay('<div class="spinner"></div>', 'กำลังโหลด ' + ch.name + '...');
-
-  // Build ClearKey object: base64url(kid) -> base64url(key)
-  const kidB64 = hexToBase64url(ch.kid);
-  const keyB64 = hexToBase64url(ch.key);
-  const clearkeys = {};
-  clearkeys[kidB64] = keyB64;
-
-  player = dashjs.MediaPlayer().create();
-
-  // Set protection data BEFORE initialize
-  player.setProtectionData({
-    'org.w3.clearkey': {
-      clearkeys: clearkeys
-    }
-  });
-
-  player.initialize(vid, ch.url, true);
-
-  player.updateSettings({
-    streaming: {
-      abr: {
-        autoSwitchBitrate: { video: true, audio: true }
-      },
-      liveCatchup: {
-        enabled: true,
-        mode: 'liveCatchupModeDefault'
-      },
-      buffer: {
-        fastSwitchEnabled: true
+    function initApp() {
+      shaka.polyfill.installAll();
+      if (shaka.Player.isBrowserSupported()) {
+        init();
+      } else {
+        console.error('Browser not supported!');
       }
     }
-  });
 
-  player.on(dashjs.MediaPlayer.events.PLAYBACK_STARTED, () => {
-    setStatus('▶ กำลังเล่น: ' + ch.name, 'ok');
-    hideOverlay();
-  });
+    async function init() {
+      const video = document.getElementById('video');
+      const ui = video['ui'];
+      const controls = ui.getControls();
+      const player = controls.getPlayer();
+      const config = {
+        'seekBarColors': {
+          base: 'rgba(66, 133, 244, 0.35)',
+          buffered: 'rgba(66, 133, 244, 0.6)',
+          played: 'rgba(66, 133, 244, 0.8)',
+        },
+        'volumeBarColors': {
+          base: 'rgba(66, 133, 244, 0.8)',
+          level: 'rgb(66, 133, 244)',
+        }
+      }
+      ui.configure(config);
 
-  player.on(dashjs.MediaPlayer.events.PLAYBACK_PLAYING, () => {
-    hideOverlay();
-  });
+      window.player = player;
+      window.ui = ui;
+      window.controls = controls;
 
-  player.on(dashjs.MediaPlayer.events.PLAYBACK_WAITING, () => {
-    showOverlay('<div class="spinner"></div>', 'กำลังบัฟเฟอร์...');
-  });
+      player.addEventListener("error", onPlayerErrorEvent);
+      controls.addEventListener("error", onUIErrorEvent);
 
-  player.on(dashjs.MediaPlayer.events.ERROR, (e) => {
-    let errMsg = '';
-    if (e.error && e.error.message) errMsg = e.error.message;
-    else if (e.error && e.error.code) errMsg = 'Error code: ' + e.error.code;
-    else errMsg = JSON.stringify(e.error || e);
+      try {
+        await player.load(manifestUri);
+        console.log('The video has now been loaded!');
+      } catch (error) {
+        onPlayerError(error);
+      }
 
-    // Check if CORS error
-    if (errMsg.includes('CORS') || errMsg.includes('NetworkError') || errMsg.includes('net::ERR')) {
-      errMsg = 'CORS blocked — ต้องเปิด extension CORS Unblock ให้ active';
+      player.configure({
+        drm: {
+          clearKeys: {
+            '': ''
+          }
+        }
+      });
+
+      function onPlayerErrorEvent(errorEvent) {
+        onPlayerError(event.detail);
+      }
+
+      function onPlayerError(error) {
+        console.error('Error code', error.code + ':', 'Video could not be loaded!', '[Media not found].');
+      }
+
+      function onUIErrorEvent(errorEvent) {
+        onPlayerError(event.detail);
+      }
     }
 
-    setStatus('❌ ' + errMsg, 'err');
-    showOverlay('❌ เกิดข้อผิดพลาด', errMsg);
-  });
+    function initFailed(errorEvent) {
+      console.error('Unable to load the UI library!');
+    }
 
-  player.on(dashjs.MediaPlayer.events.KEY_ERROR, (e) => {
-    setStatus('🔑 DRM error: ' + (e.error || ''), 'err');
-    showOverlay('🔑 DRM Error', 'ClearKey ไม่สำเร็จ: ' + JSON.stringify(e.error || ''));
-  });
-}
-</script>
+    document.addEventListener('shaka-ui-loaded', init);
+    document.addEventListener('shaka-ui-load-failed', initFailed);
+    document.addEventListener('DOMContentLoaded', initApp);
+
+    Object.defineProperty(navigator, 'userAgent', {
+      get: function() { // Latest (Feb 18, 2024)
+        return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Firefox/122.0 Edg/121.0.2277.112 OPR/107.0.0.0 UCBrowser/16.3.0.1281 Vivaldi/6.5.3206.63 YaBrowser/23.9.0.2325 Yowser/2.5 Safari/537.36';
+      }
+    });
+  </script>
+
 </body>
 </html>
